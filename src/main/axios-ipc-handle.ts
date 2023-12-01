@@ -6,7 +6,6 @@ export const createAxiosIpcHandle = () => {
     try {
       if (method === 'get') {
         console.log('ipcMian - axios/get: ', url);
-        console.log('get params: ', params);
         const { data } = await axios.get(url, { params });
         return {
           isSuccess: true,

@@ -49,7 +49,7 @@ export const fetchStocksByFilter = async (params: FilterConfigs): Promise<Array<
   const res = await get(url, {
     st: 'CHANGE_RATE',
     sr: '-1',
-    ps: '50',
+    ps: '9999',
     p: '1',
     sty: 'SECUCODE,SECURITY_CODE,SECURITY_NAME_ABBR,NEW_PRICE,CHANGE_RATE,VOLUME_RATIO,HIGH_PRICE,LOW_PRICE,PRE_CLOSE_PRICE,VOLUME,DEAL_AMOUNT,TURNOVERRATE,PE9,TOTAL_MARKET_CAP,ROE_WEIGHT,LISTING_DATE,INDUSTRY',
     filter,
@@ -62,6 +62,20 @@ export const fetchStocksByFilter = async (params: FilterConfigs): Promise<Array<
     return [];
   }
 
-  return res.result.data;
+  return (res.result.data as any[]).map<BaseStockInfo>((item: any) => {
+    const {
+      SECUCODE,
+    } = item;
+    const [code, stockExchangeName] = SECUCODE.split('.');
+
+    return {
+      code,
+      stockExchangeName,
+      name: item['SECURITY_NAME_ABBR'],
+      roe: item['ROE_WEIGHT'],
+      totalMarketCap: item['TOTAL_MARKET_CAP'],
+      ttmPe: item['PE9'],
+    };
+  });
 };
 

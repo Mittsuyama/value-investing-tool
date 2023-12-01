@@ -3,8 +3,8 @@ import Store from 'electron-store';
 
 export const createStoreIpcHandle = () => {
   const store = new Store();
-  ipcMain.handle('store', (_, func: string, params: any) => {
-    return store[func](params);
+  ipcMain.handle('store', (_, func: string, ...params: any[]) => {
+    return store[func](...params);
   });
 };
 

@@ -18,7 +18,6 @@ export const getStore = async (key: string) => {
     'store',
     'get',
     key,
-    {},
   );
 };
 
