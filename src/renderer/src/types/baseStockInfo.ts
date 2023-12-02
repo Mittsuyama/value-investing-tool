@@ -17,8 +17,3 @@ export interface BaseStockInfo {
   /** 滚动市盈率 */
   ttmPe: number;
 }
-
-export interface StockInfoInStore extends BaseStockInfo {
-  hasReports?: number[];
-}
-

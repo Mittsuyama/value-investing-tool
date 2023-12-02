@@ -30,3 +30,9 @@ export const setStore = async (key: string, data: any) => {
   );
 };
 
+export const clearStore = async () => {
+  return await window.electron.ipcRenderer.invoke(
+    'store',
+    'clear',
+  );
+};

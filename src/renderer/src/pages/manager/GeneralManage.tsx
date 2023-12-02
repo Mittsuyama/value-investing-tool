@@ -1,15 +1,19 @@
+import { memo, useState } from 'react';
 import { useMemoizedFn, useMount } from 'ahooks';
 import { Table, Spin, Button } from 'antd';
-import type { StockInfoInStore } from '@renderer/types';
+import { useLocation } from 'react-router-dom';
+import type { BaseStockInfo } from '@renderer/types';
 import {
   getAllStocks,
   setAllStocks,
   fetchStocksByFilter,
 } from '@renderer/api';
-import { memo, useState } from 'react';
 
-export const Manager = memo(() => {
-  const [list, setList] = useState<StockInfoInStore[]>([]);
+export const GeneralManage = memo(() => {
+  const { pathname } = useLocation();
+  console.log('pathname', pathname);
+
+  const [list, setList] = useState<BaseStockInfo[]>([]);
   const [loading, setLoading] = useState(true);
 
   useMount(async () => {
@@ -53,27 +57,19 @@ export const Manager = memo(() => {
                 title: 'TTM 市盈率',
                 key: 'ttm-pe',
                 dataIndex: 'ttmPe',
+                render: (value) => Number(value).toFixed(2),
               },
               {
                 title: 'ROE',
                 key: 'roe',
                 dataIndex: 'roe',
+                render: (value) => Number(value).toFixed(2),
               },
               {
                 title: '市值',
                 key: 'totalMarketCap',
                 dataIndex: 'totalMarketCap',
-              },
-              {
-                title: '财报数据状态',
-                key: 'totalMarketCap',
-                render() {
-                  return (
-                    <div>
-                      未获取
-                    </div>
-                  );
-                },
+                render: (value) => `${(Number(value) / 1_0000_0000).toFixed(2)} 亿`,
               },
             ]}
           />
@@ -83,5 +79,5 @@ export const Manager = memo(() => {
   )
 });
 
-Manager.displayName = 'Manager';
+GeneralManage.displayName = 'GeneralManage';
 

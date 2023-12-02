@@ -26,6 +26,7 @@
     "antd": "^5.11.5",
     "axios": "^1.6.2",
     "electron-store": "^8.1.0",
+    "react-router-dom": "^5.0.0",
     "styled-components": "^6.1.1"
   },
   "devDependencies": {
@@ -35,6 +36,7 @@
     "@types/node": "^18.17.5",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
+    "@types/react-router-dom": "^5.3.3",
     "@vitejs/plugin-react": "^4.0.4",
     "electron": "^25.6.0",
     "electron-builder": "^24.6.3",

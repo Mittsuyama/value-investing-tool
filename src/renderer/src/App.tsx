@@ -1,8 +1,8 @@
 import React, { memo } from 'react';
-import { DatabaseOutlined } from '@ant-design/icons';
-import type { MenuProps } from 'antd';
-import { Menu } from 'antd';
-import { Manager } from '@renderer/pages/manager';
+import { Route, Switch, useHistory } from 'react-router-dom';
+import { type MenuProps, Menu } from 'antd';
+import { SettingOutlined } from '@ant-design/icons';
+import { SettingsDatabase } from '@renderer/pages/settings';
 
 type MenuItem = Required<MenuProps>['items'][number];
 
@@ -23,15 +23,16 @@ function getItem(
 }
 
 const items: MenuProps['items'] = [
-  getItem('数据管理', 'manager', <DatabaseOutlined />, [
-    getItem('预览', 'manager-general'),
+  getItem('设置', 'settings', <SettingOutlined />, [
+    getItem('数据管理', 'settings/database'),
   ]),
-  getItem('Group', 'grp', null, [getItem('Option 13', '13'), getItem('Option 14', '14')], 'group'),
 ];
 
 export const App = memo(() => {
+  const history = useHistory();
+
   const onClick: MenuProps['onClick'] = (e) => {
-    console.log('click ', e);
+    history.push(`/${e.key}`);
   };
 
   return (
@@ -41,14 +42,17 @@ export const App = memo(() => {
           className="h-full"
           onClick={onClick}
           style={{ width: 256 }}
-          defaultSelectedKeys={['manager-general']}
-          defaultOpenKeys={['manager']}
+          defaultSelectedKeys={['settings/database']}
+          defaultOpenKeys={['settings']}
           mode="inline"
           items={items}
         />
       </div>
       <div className="flex-1 h-full">
-        <Manager />
+        <Switch>
+          <Route path="/settings/database" exact component={SettingsDatabase} />
+          <Route path="/" component={SettingsDatabase} />
+        </Switch>
       </div>
     </div>
   );

@@ -54,7 +54,7 @@ app.whenReady().then(() => {
   createWindow()
 
   createAxiosIpcHandle();
-  createStoreIpcHandle();
+  createStoreIpcHandle(app);
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
