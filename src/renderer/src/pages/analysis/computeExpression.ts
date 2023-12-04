@@ -1,5 +1,5 @@
 import { LEADING_INDICAOTR_ITEMS } from '@renderer/constants/leading-indicator-items';
-import type { StockWithLeadingIndicators } from '@renderer/types';
+import type { StockBaseInfo, StockWithLeadingIndicators } from '@renderer/types';
 import type { OperationType, RPNExpression } from '@renderer/types/filter-schema';
 
 export const isOperation = (str: string): str is OperationType => {
@@ -59,7 +59,7 @@ export const transferToRPN = (expression: string) => {
         }
       }
       if (!isPaired) {
-        throw new Error('存在未配对的「)」符号');
+        throw new Error('存在未配对的 ")" 符号');
       }
     }
     if (ch === '+' || ch === '-') {
@@ -111,7 +111,7 @@ export const transferToRPN = (expression: string) => {
   }
 
   const signList = result.filter((item) => typeof item === 'string' && isOperation(item));
-  
+
   if (signList.length > result.length - signList.length - 1) {
     throw new Error('存在多余的运算符')
   }
@@ -122,7 +122,7 @@ export const transferToRPN = (expression: string) => {
   return result;
 };
 
-export const computeRPN = (rpn: RPNExpression, info: StockWithLeadingIndicators) => {
+export const computeRPN = (rpn: RPNExpression, info: StockWithLeadingIndicators, map?: Map<string, StockBaseInfo>) => {
   try {
     const stack: number[] = [];
     rpn.forEach((item) => {
@@ -143,11 +143,17 @@ export const computeRPN = (rpn: RPNExpression, info: StockWithLeadingIndicators)
         }
       } else if (typeof item === 'string') {
         const [pinyin, chinese, year = 0] = item.split('-');
-        const value = info.indicators[year][LEADING_INDICAOTR_ITEMS[`${pinyin}-${chinese}`]];
-        if (!value) {
-          throw new Error(`缺少数据: ${info.name} ${info.id} ${year} ${pinyin}-${chinese}`);
+        if (pinyin === 'pe' && map) {
+          stack.push(map.get(info.id)?.ttmPe || 0);
+        } else if (pinyin === 'zsz' && map) {
+          stack.push(map.get(info.id)?.totalMarketCap || 0);
+        } else {
+          const value = info.indicators[year][LEADING_INDICAOTR_ITEMS[`${pinyin}-${chinese}`]];
+          if (!value) {
+            throw new Error(`缺少数据: ${info.name} ${info.id} ${year} ${pinyin}-${chinese}`);
+          }
+          stack.push(value);
         }
-        stack.push(value);
       } else {
         stack.push(item);
       }

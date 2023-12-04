@@ -58,16 +58,24 @@ export const Filter = memo(() => {
           if (!filterOnSet.has(sc.id)) {
             return false;
           }
-          const value = computeRPN(sc.RPN, record);
+          const value = computeRPN(sc.RPN, record, baseInfoMap);
           if (value === null) {
             return true;
           }
-          // illegal
-          if (sc.relation === 'greater-than') {
-            return value < sc.value;
-          } else {
-            return value > sc.value;
+          let times = 1;
+          if (sc.limitUnit === 'y') {
+            times = 1_0000_0000;
+          } else if (sc.limitUnit === 'w') {
+            times = 1_0000;
           }
+          // illegal
+          if (sc.limit[0] !== null && value < sc.limit[0] * times) {
+            return true;
+          }
+          if (sc.limit[1] !== null && value > sc.limit[1] * times) {
+            return true;
+          }
+          return false;
         });
       });
     },
@@ -88,7 +96,7 @@ export const Filter = memo(() => {
         )}
         {
           schema.map((item) => {
-            const { title, expression, relation, value, id } = item;
+            const { title, expression, id, limit } = item;
             return (
               <Tooltip
                 key={expression}
@@ -99,8 +107,8 @@ export const Filter = memo(() => {
                       {expression}
                     </div>
                     <div className="flex-none flex items-center gap-3">
-                      <div>{relation === 'greater-than' ? '>' : '<'}</div>
-                      <div>{value}</div>
+                      <div>∈</div>
+                      <div>{`[${limit[0] || '-∞'}, ${limit[1] || '+∞'}]`}</div>
                     </div>
                   </div>
                 )}
@@ -149,6 +157,11 @@ export const Filter = memo(() => {
 
         </Form>
       </div>
+      {filteredList && (
+        <div className="text-base mb-4">
+          {`筛选结果条数: ${filteredList?.length}`}
+        </div>
+      )}
       <Spin spinning={!filteredList}>
         <Table
           pagination={{
@@ -157,6 +170,7 @@ export const Filter = memo(() => {
               setPageSize(pageSize);
             },
             showQuickJumper: true,
+            showSizeChanger: true,
           }}
           rowKey="code"
           dataSource={filteredList || []}
@@ -185,18 +199,6 @@ export const Filter = memo(() => {
                 return <div>{record.indicators[record.indicators.length - 1].reportYear} 年</div>;
               },
             },
-            {
-              title: 'TTM 市盈率',
-              key: 'ttm-pe',
-              dataIndex: 'ttmPe',
-              render: (_, { id }) => baseInfoMap.get(id)?.ttmPe,
-            },
-            {
-              title: '市值',
-              key: 'totalMarketCap',
-              dataIndex: 'totalMarketCap',
-              render: (value) => `${(Number(value) / 1_0000_0000).toFixed(2)} 亿`,
-            },
             ...schema.map<TableColumnProps<StockWithLeadingIndicators>>((sc) => {
               return {
                 title: (
@@ -218,9 +220,16 @@ export const Filter = memo(() => {
                 ),
                 key: sc.id,
                 render: (_, record) => {
-                  return (computeRPN(sc.RPN, record) || 0).toFixed(2);
+                  const value = computeRPN(sc.RPN, record, baseInfoMap) || 0;
+                  if (value > 1_0000_0000) {
+                    return `${(value / 1_0000_0000).toFixed(2)} 亿`;
+                  }
+                  if (value > 1_0000) {
+                    return `${(value / 1_0000).toFixed(2)} 万`;
+                  }
+                  return value.toFixed(2);
                 },
-                sorter: (a, b) => (computeRPN(sc.RPN, a) || 0) - (computeRPN(sc.RPN, b) || 0),
+                sorter: (a, b) => (computeRPN(sc.RPN, a, baseInfoMap) || 0) - (computeRPN(sc.RPN, b, baseInfoMap) || 0),
               };
             }),
           ]}

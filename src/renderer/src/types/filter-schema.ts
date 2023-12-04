@@ -9,6 +9,7 @@ export interface FilterSchema {
   title: string;
   expression: string;
   RPN: RPNExpression;
-  relation: FilterSchemaRelation;
-  value: number;
+  limit: [number | null, number | null];
+  /** 亿/万 */
+  limitUnit: 'y' | 'w' | null;
 }
