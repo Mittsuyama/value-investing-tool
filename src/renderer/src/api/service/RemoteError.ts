@@ -7,4 +7,3 @@ export class RemoteError extends Error {
     this.message = message;
   }
 }
-

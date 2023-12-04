@@ -1,4 +1,7 @@
-export interface BaseStockInfo {
+export interface StockBaseInfo {
+  /** 唯一标识符，由 {code}.{stockExchangeNam} 组成 */
+  id: string;
+
   /** 股票代码 */
   code: string;
 

@@ -1,4 +1,4 @@
-import { BaseStockInfo } from '@renderer/types';
+import { StockBaseInfo } from '@renderer/types';
 import { get } from './utils';
 
 const url = 'https://data.eastmoney.com/dataapi/xuangu/list';
@@ -20,7 +20,8 @@ interface FilterConfigs {
   isOverFiveYear?: boolean;
 }
 
-export const fetchStocksByFilter = async (params: FilterConfigs): Promise<Array<BaseStockInfo>> => {
+/** 根据一些过滤规则返回股票信息（没有规则，则返回所有股票） */
+export const fetchStocksByFilter = async (params: FilterConfigs): Promise<Array<StockBaseInfo>> => {
   const {
     maxPe,
     minPe,
@@ -62,13 +63,14 @@ export const fetchStocksByFilter = async (params: FilterConfigs): Promise<Array<
     return [];
   }
 
-  return (res.result.data as any[]).map<BaseStockInfo>((item: any) => {
+  return (res.result.data as any[]).map<StockBaseInfo>((item: any) => {
     const {
       SECUCODE,
     } = item;
     const [code, stockExchangeName] = SECUCODE.split('.');
 
     return {
+      id: SECUCODE,
       code,
       stockExchangeName,
       name: item['SECURITY_NAME_ABBR'],

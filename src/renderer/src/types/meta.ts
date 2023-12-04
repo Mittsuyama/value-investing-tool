@@ -1,4 +1,4 @@
-export interface DatabaseInfo {
+export interface MetaInfo {
   /** 指标更新时间 */
   updateTime?: Record<string, number | undefined>;
 
