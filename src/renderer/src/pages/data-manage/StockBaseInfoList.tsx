@@ -10,15 +10,12 @@ import {
   getMetaInfo,
   setMetaInfo as setLocalstorageMetaInfo,
 } from '@renderer/api/localstorage';
-import { useLocation } from 'react-router-dom';
 
 const PAGE_SIZE = 10;
 
 export const StockBaseInfoList = memo(() => {
   const [metaInfo, setMetaInfo] = useState(getMetaInfo());
   const [fetching, setFetching] = useState(false);
-
-  console.log(useLocation().pathname);
 
   const total = useLiveQuery(() => db.stockBaseInfoList.count());
   const list = useLiveQuery(() => db.stockBaseInfoList.toArray());

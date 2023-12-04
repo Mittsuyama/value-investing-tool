@@ -131,7 +131,7 @@ export const LeadingIndicators = memo(() => {
             {
               !fetching
                 && metaInfo?.stocksWithLeadingIndicatorsFetchingPage
-                && metaInfo.stocksWithLeadingIndicatorsFetchingPage !== FETCH_STOCK_WITH_LEADING_INDICATORS_TOTAL_PAGE - 1
+                && metaInfo.stocksWithLeadingIndicatorsFetchingPage < FETCH_STOCK_WITH_LEADING_INDICATORS_TOTAL_PAGE - 1
                 ? (
                   <Button
                     onClick={() => {

@@ -3,7 +3,7 @@ import { Input, Modal, Select, Mentions, Tooltip, InputRef } from 'antd';
 import type { FilterSchema, FilterSchemaRelation } from '@renderer/types/filter-schema';
 import { LEADING_INDICAOTR_ITEMS } from '@renderer/constants/leading-indicator-items';
 import { transferToRPN } from './computeExpression';
-import { useMount } from 'ahooks';
+import { useMemoizedFn, useMount } from 'ahooks';
 
 interface AddFilterSchemaModalProps {
   visible: boolean;
@@ -27,6 +27,7 @@ export const AddFilterSchemaModal = memo((props: AddFilterSchemaModalProps) => {
   const [expErrorMessage, setExpErrorMessage] = useState('');
 
   const titleRef = useRef<InputRef>(null);
+  const inputComposingRef = useRef<Record<string, boolean>>({});
 
   useMount(() => {
     titleRef.current?.focus();
@@ -36,6 +37,24 @@ export const AddFilterSchemaModal = memo((props: AddFilterSchemaModalProps) => {
     () => Number.isNaN(Number(value)),
     [value],
   );
+
+  const onOk = useMemoizedFn(() => {
+    try {
+      const numValue = Number(value);
+      if (!Number.isNaN(numValue) && title) {
+        onConfirm({
+          id: defaultSchema?.id || `${Date.now()}-${Math.random().toString().slice(2, 10)}`,
+          title,
+          expression,
+          relation,
+          value: numValue,
+          RPN: transferToRPN(expression),
+        });
+      }
+    } catch {
+      // do nothing
+    }
+  });
 
   return (
     <Modal
@@ -48,23 +67,7 @@ export const AddFilterSchemaModal = memo((props: AddFilterSchemaModalProps) => {
       okButtonProps={{
         disabled: !expression.length,
       }}
-      onOk={() => {
-        try {
-          const numValue = Number(value);
-          if (!Number.isNaN(numValue) && title) {
-            onConfirm({
-              id: defaultSchema?.id || `${Date.now()}-${Math.random().toString().slice(2, 10)}`,
-              title,
-              expression,
-              relation,
-              value: numValue,
-              RPN: transferToRPN(expression),
-            });
-          }
-        } catch {
-          // do nothing
-        }
-      }}
+      onOk={onOk}
     >
       <div className="pr-4 pb-4 pt-2">
         <div className="my-5 flex items-center">
@@ -72,6 +75,9 @@ export const AddFilterSchemaModal = memo((props: AddFilterSchemaModalProps) => {
           <Input
             ref={titleRef}
             className="flex-1"
+            onCompositionStart={() => inputComposingRef.current.title = true}
+            onCompositionEnd={() => inputComposingRef.current.title = false}
+            onKeyDown={(e) => !inputComposingRef.current.title && e.key === 'Enter' && onOk()}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
@@ -81,11 +87,13 @@ export const AddFilterSchemaModal = memo((props: AddFilterSchemaModalProps) => {
           <div className="flex-1 flex flex-wrap items-center">
             <Tooltip title={expErrorMessage} open={!!expErrorMessage} placement="topLeft">
               <Mentions
+                onCompositionStart={() => inputComposingRef.current.mentions = true}
+                onCompositionEnd={() => inputComposingRef.current.mentions = false}
+                onKeyDown={(e) => !inputComposingRef.current.mentions && e.key === 'Enter' && onOk()}
                 autoSize
                 status={expErrorMessage ? 'error' : undefined}
                 onChange={(exp) => {
                   try {
-                    transferToRPN(exp);
                     setExpErrorMessage('');
                   } catch (e: any) {
                     setExpErrorMessage(e.message);
@@ -121,6 +129,9 @@ export const AddFilterSchemaModal = memo((props: AddFilterSchemaModalProps) => {
             placement="topLeft"
           >
             <Input
+              onCompositionStart={() => inputComposingRef.current.value = true}
+              onCompositionEnd={() => inputComposingRef.current.value = false}
+              onKeyDown={(e) => !inputComposingRef.current.value && e.key === 'Enter' && onOk()}
               className="flex-1"
               value={value}
               onChange={(e) => setValue(e.target.value)}

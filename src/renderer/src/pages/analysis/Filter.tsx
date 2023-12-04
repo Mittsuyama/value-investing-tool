@@ -58,11 +58,15 @@ export const Filter = memo(() => {
           if (!filterOnSet.has(sc.id)) {
             return false;
           }
+          const value = computeRPN(sc.RPN, record);
+          if (value === null) {
+            return true;
+          }
           // illegal
           if (sc.relation === 'greater-than') {
-            return computeRPN(sc.RPN, record) < sc.value;
+            return value < sc.value;
           } else {
-            return computeRPN(sc.RPN, record) > sc.value;
+            return value > sc.value;
           }
         });
       });
@@ -198,23 +202,25 @@ export const Filter = memo(() => {
                 title: (
                   <div className="flex justify-between items-center">
                     <div>{sc.title}</div>
-                    <div
-                      className={cls(
-                        'py-1 px-2 rounded cursor-pointer',
-                        { 'text-blue-500 hover:text-blue-600': filterOnSet.has(sc.id) },
-                        { 'text-gray-400 hover:text-blue-300': !filterOnSet.has(sc.id) },
-                      )}
-                      onClick={() => toggleFilter(sc.id)}
-                    >
-                      <FilterFilled />
-                    </div>
+                    <Tooltip title="是否筛选" trigger="hover">
+                      <div
+                        className={cls(
+                          'py-1 px-2 rounded cursor-pointer',
+                          { 'text-blue-500 hover:text-blue-600': filterOnSet.has(sc.id) },
+                          { 'text-gray-400 hover:text-blue-300': !filterOnSet.has(sc.id) },
+                        )}
+                        onClick={() => toggleFilter(sc.id)}
+                      >
+                        <FilterFilled />
+                      </div>
+                    </Tooltip>
                   </div>
                 ),
                 key: sc.id,
                 render: (_, record) => {
-                  return computeRPN(sc.RPN, record);
+                  return (computeRPN(sc.RPN, record) || 0).toFixed(2);
                 },
-                sorter: (a, b) => computeRPN(sc.RPN, a) - computeRPN(sc.RPN, b),
+                sorter: (a, b) => (computeRPN(sc.RPN, a) || 0) - (computeRPN(sc.RPN, b) || 0),
               };
             }),
           ]}
