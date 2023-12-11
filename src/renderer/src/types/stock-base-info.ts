@@ -19,4 +19,7 @@ export interface StockBaseInfo {
 
   /** 滚动市盈率 */
   ttmPe: number;
+
+  /** 行业 */
+  INDUSTRY: string;
 }

@@ -1,47 +1,87 @@
 import { memo, useMemo, useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
 import {
   Spin,
   Table,
-  Form,
-  Space,
   Tooltip,
   Tag,
   theme,
 } from 'antd';
-import cls from 'classnames';
-import { useMemoizedFn, useMount } from 'ahooks';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { PlusOutlined, FilterFilled } from '@ant-design/icons';
-import type { FilterSchema } from '@renderer/types/filter-schema';
+import { TableColumnProps } from 'antd/lib';
+import { PlusOutlined } from '@ant-design/icons';
 import { db } from '@renderer/api/db';
 import { getFilterSchema, setFilterSchema } from '@renderer/api/localstorage';
+import type { StockWithLeadingIndicators } from '@renderer/types';
+import type { FilterSchema } from '@renderer/types/filter-schema';
+import { NameColumn } from '@renderer/components/TableColumn';
+import { computeRPNWithLeadingIndicators } from './computeExpression';
 import { AddFilterSchemaModal } from './AddFilterSchemaModal';
-import { StockBaseInfo, StockWithLeadingIndicators } from '@renderer/types';
-import { TableColumnProps } from 'antd/lib';
-import { computeRPN } from './computeExpression';
+
+const simplyExpression = (exp?: string) => {
+  if (!exp) {
+    return 'Not Exist Expression';
+  }
+
+  let res = '';
+  let isVariable = false;
+  let variable = '';
+  let isBracket = false;
+
+  const getTextFromVariable = (v: string) => {
+    const [pinyin, chinese, year = '0'] = v.split('-');
+    let prefix = '';
+    if (year.startsWith('avg')) {
+      const years = year[3];
+      prefix = `${years} 年均 - `;
+    }
+    return `${prefix}${(chinese || pinyin)}`;
+  };
+
+  for (const ch of exp) {
+    if (ch === ']') {
+      isBracket = false;
+      continue;
+    }
+    if (ch === '[') {
+      isBracket = true;
+      continue;
+    }
+    if (isBracket) {
+      continue;
+    }
+    if (ch === '@') {
+      isVariable = true;
+      continue;
+    }
+    if (isVariable && /[\s()]/.test(ch)) {
+      if (!variable) {
+        return 'error';
+      }
+      res += getTextFromVariable(variable);
+      variable = '';
+      isVariable = false;
+    }
+    if (isVariable) {
+      variable += ch;
+    } else {
+      res += ch;
+    }
+  }
+  return res + getTextFromVariable(variable);
+};
 
 export const Filter = memo(() => {
   const { token } = theme.useToken();
   const [schema, setSchema] = useState(getFilterSchema());
   const [addFilterModalVisible, setAddFilterModalVisible] = useState(false);
-  const [baseInfoMap, setBaseInfoMap] = useState<Map<string, StockBaseInfo>>(new Map());
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(20);
   const [defaultSchema, setDefaultSchema] = useState<FilterSchema | undefined>(undefined);
 
   const [filterOnSet, setFilterOnSet] = useState(new Set(schema.map((item) => item.id)));
-  const toggleFilter = useMemoizedFn((id: string) => {
-    const tmpSet = new Set(filterOnSet);
-    if (filterOnSet.has(id)) {
-      tmpSet.delete(id);
-    } else {
-      tmpSet.add(id);
-    }
-    setFilterOnSet(tmpSet);
-  });
 
-  useMount(async () => {
+  const baseInfoMap = useLiveQuery(async () => {
     const list = await db.stockBaseInfoList.toArray();
-    setBaseInfoMap(new Map(list.map((item) => [item.id, item])));
+    return new Map(list.map((item) => [item.id, item]));
   });
 
   const list = useLiveQuery(
@@ -58,7 +98,11 @@ export const Filter = memo(() => {
           if (!filterOnSet.has(sc.id)) {
             return false;
           }
-          const value = computeRPN(sc.RPN, record, baseInfoMap);
+          if (!sc.RPN) {
+            return false;
+          }
+          const value = computeRPNWithLeadingIndicators(sc.RPN, record, baseInfoMap);
+          // 因为各种原因（比如缺失数据）导致无法计算出结果，直接抛弃
           if (value === null) {
             return true;
           }
@@ -69,17 +113,25 @@ export const Filter = memo(() => {
             times = 1_0000;
           }
           // illegal
-          if (sc.limit[0] !== null && value < sc.limit[0] * times) {
+          if (sc.limit?.[0] !== undefined && value < sc.limit[0] * times) {
             return true;
           }
-          if (sc.limit[1] !== null && value > sc.limit[1] * times) {
+          if (sc.limit?.[1] !== undefined && value > sc.limit[1] * times) {
             return true;
           }
           return false;
         });
       });
     },
-    [list, filterOnSet, schema],
+    [list, filterOnSet, schema, baseInfoMap],
+  );
+
+  const industryList = useMemo(
+    () => {
+      const noDuplicateList = Array.from(new Set(filteredList?.map((item) => baseInfoMap?.get?.(item.id)?.INDUSTRY)));
+      return noDuplicateList.filter((item): item is string => !!item);
+    },
+    [filteredList, baseInfoMap],
   );
 
   return (
@@ -87,7 +139,7 @@ export const Filter = memo(() => {
       <div className="text-lg mb-4 bold">
         指标筛选
       </div>
-      <Space wrap size={0}>
+      <div className="flex items-center flex-wrap gap-y-2 mb-4">
         <div className="mr-5">
           当前筛选项:
         </div>
@@ -104,11 +156,11 @@ export const Filter = memo(() => {
                 title={(
                   <div className="flex items-center gap-3">
                     <div>
-                      {expression}
+                      {simplyExpression(expression)}
                     </div>
                     <div className="flex-none flex items-center gap-3">
                       <div>∈</div>
-                      <div>{`[${limit[0] || '-∞'}, ${limit[1] || '+∞'}]`}</div>
+                      <div>{`[${limit?.[0] ?? '-∞'}, ${limit?.[1] ?? '+∞'}]`}</div>
                     </div>
                   </div>
                 )}
@@ -151,90 +203,77 @@ export const Filter = memo(() => {
         >
           增加筛选项
         </Tag>
-      </Space>
-      <div className="mb-4">
-        <Form autoComplete="off" layout="inline">
-
-        </Form>
       </div>
-      {filteredList && (
-        <div className="text-base mb-4">
-          {`筛选结果条数: ${filteredList?.length}`}
-        </div>
-      )}
-      <Spin spinning={!filteredList}>
-        <Table
-          pagination={{
-            pageSize,
-            onChange(_, pageSize) {
-              setPageSize(pageSize);
-            },
-            showQuickJumper: true,
-            showSizeChanger: true,
-          }}
-          rowKey="code"
-          dataSource={filteredList || []}
-          columns={[
-            {
-              title: '名称',
-              key: 'name',
-              dataIndex: 'name',
-            },
-            {
-              title: '代码',
-              key: 'code',
-              dataIndex: 'code',
-            },
-            {
-              title: '最近报表时间',
-              key: 'latestReportTime',
-              render: (_, record) => {
-                return <div>{record.indicators[0].reportYear} 年</div>;
+      <div className="text-base mb-4">
+        {`筛选结果条数: ${filteredList ? filteredList.length : '加载中' }`}
+      </div>
+      <div className="w-full overflow-x-auto">
+        <Spin spinning={!filteredList}>
+          <Table<StockWithLeadingIndicators>
+            pagination={{
+              pageSize,
+              onChange(_, pageSize) {
+                setPageSize(pageSize);
               },
-            },
-            {
-              title: '最早报表时间',
-              key: 'earliestReportTime',
-              render: (_, record) => {
-                return <div>{record.indicators[record.indicators.length - 1].reportYear} 年</div>;
-              },
-            },
-            ...schema.map<TableColumnProps<StockWithLeadingIndicators>>((sc) => {
-              return {
-                title: (
-                  <div className="flex justify-between items-center">
-                    <div>{sc.title}</div>
-                    <Tooltip title="是否筛选" trigger="hover">
-                      <div
-                        className={cls(
-                          'py-1 px-2 rounded cursor-pointer',
-                          { 'text-blue-500 hover:text-blue-600': filterOnSet.has(sc.id) },
-                          { 'text-gray-400 hover:text-blue-300': !filterOnSet.has(sc.id) },
-                        )}
-                        onClick={() => toggleFilter(sc.id)}
-                      >
-                        <FilterFilled />
-                      </div>
-                    </Tooltip>
-                  </div>
-                ),
-                key: sc.id,
-                render: (_, record) => {
-                  const value = computeRPN(sc.RPN, record, baseInfoMap) || 0;
-                  if (value > 1_0000_0000) {
-                    return `${(value / 1_0000_0000).toFixed(2)} 亿`;
-                  }
-                  if (value > 1_0000) {
-                    return `${(value / 1_0000).toFixed(2)} 万`;
-                  }
-                  return value.toFixed(2);
+              showQuickJumper: true,
+              showSizeChanger: true,
+            }}
+            rowKey="code"
+            dataSource={filteredList || []}
+            columns={[
+              {
+                title: '名称',
+                key: 'name',
+                dataIndex: 'name',
+                render: (name: string, record) => {
+                  return <NameColumn name={name} id={record.id} />;
                 },
-                sorter: (a, b) => (computeRPN(sc.RPN, a, baseInfoMap) || 0) - (computeRPN(sc.RPN, b, baseInfoMap) || 0),
-              };
-            }),
-          ]}
-        />
-      </Spin>
+              },
+              {
+                title: '行业',
+                key: 'industry',
+                render: (_, record) => {
+                  return <div>{baseInfoMap?.get?.(record.id)?.INDUSTRY}</div>;
+                },
+                filters: industryList?.map((name) => ({
+                  text: name,
+                  value: name,
+                })),
+                onFilter: (value, record) => baseInfoMap?.get?.(record.id)?.INDUSTRY === value,
+              },
+              {
+                title: '最新报表时间',
+                key: 'latestReportTime',
+                render: (_, record) => {
+                  return <div>{record.indicators[0].reportYear} 年</div>;
+                },
+              },
+              ...schema.map<TableColumnProps<StockWithLeadingIndicators>>((sc) => {
+                return {
+                  title: sc.title,
+                  key: sc.id,
+                  render: (_, record) => {
+                    if (!sc.RPN) {
+                      return 'Not Exist RPN';
+                    }
+                    const value = computeRPNWithLeadingIndicators(sc.RPN, record, baseInfoMap) || 0;
+                    if (value > 1_0000_0000) {
+                      return `${(value / 1_0000_0000).toFixed(2)} 亿`;
+                    }
+                    if (value > 1_0000) {
+                      return `${(value / 1_0000).toFixed(2)} 万`;
+                    }
+                    return value.toFixed(2);
+                  },
+                  sorter: sc.RPN
+                    ? ((a, b) => (computeRPNWithLeadingIndicators(sc.RPN!, a, baseInfoMap) || 0) - (computeRPNWithLeadingIndicators(sc.RPN!, b, baseInfoMap) || 0))
+                    : undefined,
+                };
+              }),
+            ]}
+          />
+        </Spin>
+      </div>
       <AddFilterSchemaModal
         key={defaultSchema?.id || `${Date.now()}-${Math.random().toString().slice(2, 10)}`}
         visible={addFilterModalVisible}

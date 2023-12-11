@@ -5,8 +5,10 @@ export const createAxiosIpcHandle = () => {
   ipcMain.handle('axios', async (_, method: string, url: string, params: any) => {
     try {
       if (method === 'get') {
-        const res = await axios.get(url, { params });
+        const res = await axios.get(`${url}?${(new URLSearchParams(params)).toString()}`);
         const { data } = res;
+        // console.log('\n\n------------------------------------------------------------------\n\n');
+        // console.log(res.config);
         return {
           isSuccess: true,
           data,

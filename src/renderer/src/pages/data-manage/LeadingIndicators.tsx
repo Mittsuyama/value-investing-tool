@@ -148,7 +148,7 @@ export const LeadingIndicators = memo(() => {
               loading={fetching}
               onClick={() => fetchFromPage(0)}
             >
-              更新数据
+              全量更新数据
             </Button>
             <ButtonWithThrottle
               onClick={async () => {

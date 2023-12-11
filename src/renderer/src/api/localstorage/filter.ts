@@ -3,8 +3,12 @@ import { LocalstorageKeys } from '@renderer/constants';
 
 const key = `value-investing-tool_${LocalstorageKeys.FILTER_SCHEMA}`;
 
-export const getFilterSchema = (): FilterSchema[] => {
-  return JSON.parse(window.localStorage.getItem(key) || '[]');
+export const getFilterSchema = (): Array<FilterSchema> => {
+  const res = JSON.parse(window.localStorage.getItem(key) || '[]');
+  return res.map((schema: FilterSchema) => ({
+    ...schema,
+    limit: schema.limit?.map?.((item) => item ?? undefined),
+  }));
 };
 
 export const setFilterSchema = (schema: FilterSchema[]) => {

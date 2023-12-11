@@ -1,70 +1,97 @@
-import React, { memo } from 'react';
-import { Route, Switch, useHistory } from 'react-router-dom';
-import { type MenuProps, Menu, ConfigProvider } from 'antd';
+import { memo, useMemo } from 'react';
+import { useMemoizedFn } from 'ahooks';
+import cls from 'classnames';
+import { useAtom } from 'jotai';
+import { atomWithStorage } from 'jotai/utils';
+import { Route, Switch, useHistory, useLocation } from 'react-router-dom';
+import { Menu, ConfigProvider, FloatButton, theme } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
-import { DatabaseOutlined, RadarChartOutlined } from '@ant-design/icons';
-import { LeadingIndicators, StockBaseInfoList } from '@renderer/pages/data-manage';
+import {
+  MenuUnfoldOutlined,
+  MenuFoldOutlined,
+  StockOutlined,
+} from '@ant-design/icons';
+import { LeadingIndicators, StockBaseInfoList, FinancialReportsData } from '@renderer/pages/data-manage';
+import { FinancialReportsDataDetail } from '@renderer/pages/detail';
 import { Filter } from '@renderer/pages/analysis';
+import { RouteKeys } from '@renderer/routers/configs';
+import { menuConfigs, findMenu, generateMenuItems } from '@renderer/routers/menus';
 
-enum RouteKeys {
-  STOCK_BASE_INFO = '/data-manage/stock-base-info',
-  STOCK_WITH_LEADING_INDICAOTRS = '/data-manage/stock-with-leading-indicators',
-  ANALYSIS_FILTER = '/analysis/filter',
-}
-
-type MenuItem = Required<MenuProps>['items'][number];
-
-function getItem(
-  label: React.ReactNode,
-  key: React.Key,
-  icon?: React.ReactNode,
-  children?: MenuItem[],
-  type?: 'group',
-): MenuItem {
-  return {
-    key,
-    icon,
-    children,
-    label,
-    type,
-  } as MenuItem;
-}
-
-const items: MenuProps['items'] = [
-  getItem('数据管理', 'data-manage', <DatabaseOutlined />, [
-    getItem('股票基本数据', RouteKeys.STOCK_BASE_INFO),
-    getItem('股票主要指标', RouteKeys.STOCK_WITH_LEADING_INDICAOTRS),
-  ]),
-  getItem('股票分析', 'analysis', <RadarChartOutlined />, [
-    getItem('指标筛选', RouteKeys.ANALYSIS_FILTER),
-  ]),
-];
+const collapsedAtom = atomWithStorage('AppMenuCollapsed', localStorage.getItem('AppMenuCollapsed') === 'true');
 
 export const App = memo(() => {
   const history = useHistory();
+  const { pathname, search } = useLocation();
+
+  const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+  const [collapsed, setCollapsed] = useAtom(collapsedAtom);
+
+  const toggleCollapsed = useMemoizedFn(() => {
+    setCollapsed(!collapsed);
+  });
+
+  const defaultSelectedKeys = useMemo(
+    () => {
+      const path = findMenu(pathname)?.key;
+      const from = (new URLSearchParams(search)).get('from');
+      return path || from || RouteKeys.STOCK_BASE_INFO;
+    },
+    [pathname],
+  );
 
   return (
-    <ConfigProvider locale={zhCN}>
+    <ConfigProvider locale={zhCN} theme={{ algorithm: isDark ? theme.darkAlgorithm : theme.defaultAlgorithm }}>
       <div className="w-full h-full overflow-hidden flex">
-        <div className="flex-none h-full">
+        <div className="flex-none flex flex-col">
+          <div
+            className={cls(
+              'flex-none box-border w-full py-6 flex items-center gap-3 text-[#4374F8] font-bold',
+              { 'pl-[28px]': !collapsed },
+              { 'justify-center': collapsed },
+            )}
+            style={{
+              borderInlineEnd: isDark
+                ? '1px solid rgba(253, 253, 253, 0.12)'
+                : '1px solid rgba(5, 5, 5, 0.06)' 
+            }}
+          >
+            <StockOutlined className="text-xl" />
+            {!collapsed && (
+              <div className="text-base">
+                Value Investing
+              </div>
+            )}
+          </div>
           <Menu
-            className="h-full"
+            className="flex-1"
+            style={{ width: collapsed ? 80 : 256 }}
+            inlineCollapsed={collapsed}
             onClick={(e) => history.push(e.key)}
-            style={{ width: 256 }}
-            defaultSelectedKeys={[RouteKeys.STOCK_BASE_INFO]}
-            defaultOpenKeys={['data-manage', 'analysis']}
+            defaultSelectedKeys={collapsed ? undefined: [defaultSelectedKeys]}
+            defaultOpenKeys={collapsed ? undefined : ['data-manage', 'analysis']}
             mode="inline"
-            items={items}
+            items={generateMenuItems(menuConfigs)}
           />
         </div>
-        <div className="flex-1 h-full">
+        <div className="flex-1 h-full overflow-hidden">
           <Switch>
             <Route path={RouteKeys.STOCK_BASE_INFO} exact component={StockBaseInfoList} />
             <Route path={RouteKeys.STOCK_WITH_LEADING_INDICAOTRS} exact component={LeadingIndicators} />
+            <Route path={RouteKeys.STOCK_WITH_FINANCIAL_REPORTS_DATA} exact component={FinancialReportsData} />
             <Route path={RouteKeys.ANALYSIS_FILTER} exact component={Filter} />
+            <Route path={RouteKeys.FINANCIAL_REPORTS_DATA_DETAIL} component={FinancialReportsDataDetail} />
             <Route path="/" component={StockBaseInfoList} />
           </Switch>
         </div>
+        <FloatButton
+          shape="square"
+          type="primary"
+          tooltip="收起菜单"
+          onClick={toggleCollapsed}
+          icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+          style={{ left: 20, bottom: 20 }}
+        />
       </div>
     </ConfigProvider>
   );

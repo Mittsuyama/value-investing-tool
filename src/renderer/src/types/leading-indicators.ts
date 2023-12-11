@@ -16,4 +16,5 @@ export interface StockWithLeadingIndicators extends Pick<
   | 'name'
 > {
   indicators: LeadingIndicators[];
+  updateTime?: number;
 }

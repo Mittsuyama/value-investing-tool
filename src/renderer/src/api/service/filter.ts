@@ -77,6 +77,7 @@ export const fetchStocksByFilter = async (params: FilterConfigs): Promise<Array<
       roe: item['ROE_WEIGHT'],
       totalMarketCap: item['TOTAL_MARKET_CAP'],
       ttmPe: item['PE9'],
+      ...item,
     };
   });
 };

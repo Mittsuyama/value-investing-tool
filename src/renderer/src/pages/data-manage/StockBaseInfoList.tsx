@@ -6,6 +6,7 @@ import { MetaInfo } from '@renderer/types/meta';
 import { StoreKeys } from '@renderer/constants';
 import { fetchStocksByFilter } from '@renderer/api/service';
 import { db } from '@renderer/api/db';
+import { NameColumn } from '@renderer/components/TableColumn';
 import {
   getMetaInfo,
   setMetaInfo as setLocalstorageMetaInfo,
@@ -81,8 +82,8 @@ export const StockBaseInfoList = memo(() => {
             }
           </Space>
           <Space size={16}>
-            <Button loading={fetching} onClick={fetchList}>
-              更新数据
+            <Button type="primary" loading={fetching} onClick={fetchList}>
+              全量更新数据
             </Button>
             <Button
               onClick={async () => {
@@ -117,6 +118,9 @@ export const StockBaseInfoList = memo(() => {
               title: '名称',
               key: 'name',
               dataIndex: 'name',
+              render: (name: string, record) => {
+                return <NameColumn name={name} id={record.id} />;
+              },
             },
             {
               title: '代码',

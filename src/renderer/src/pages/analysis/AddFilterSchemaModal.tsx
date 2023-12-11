@@ -1,9 +1,9 @@
 import { memo, useMemo, useRef, useState } from 'react';
 import { Input, Modal, Mentions, Tooltip, InputRef, Select } from 'antd';
+import { useMemoizedFn, useMount } from 'ahooks';
 import type { FilterSchema } from '@renderer/types/filter-schema';
 import { LEADING_INDICAOTR_ITEMS } from '@renderer/constants/leading-indicator-items';
-import { transferToRPN } from './computeExpression';
-import { useMemoizedFn, useMount } from 'ahooks';
+import { transferToRPN } from '@renderer/utils/expression';
 
 interface AddFilterSchemaModalProps {
   visible: boolean;
@@ -11,6 +11,18 @@ interface AddFilterSchemaModalProps {
   onCancel: () => void;
   defaultSchema?: FilterSchema;
 }
+
+const str2Number = (str: string) => {
+  const res = str.trim();
+  if (res === '') {
+    return undefined;
+  }
+  const num = Number(res);
+  if (Number.isNaN(num)) {
+    return undefined;
+  }
+  return num;
+};
 
 export const AddFilterSchemaModal = memo((props: AddFilterSchemaModalProps) => {
   const {
@@ -23,11 +35,11 @@ export const AddFilterSchemaModal = memo((props: AddFilterSchemaModalProps) => {
   const [title, setTitle] = useState(defaultSchema?.title || `默认标题_${Date.now()}`);
   const [expression, setExpression] = useState(defaultSchema?.expression || '');
   const [expErrorMessage, setExpErrorMessage] = useState('');
-  const [limit, setLimit] = useState<[string | null, string | null]>([
-    typeof defaultSchema?.limit?.[0] === 'number' ? String(defaultSchema?.limit?.[0]) : null,
-    typeof defaultSchema?.limit?.[1] === 'number' ? String(defaultSchema?.limit?.[1]) : null,
+  const [limit, setLimit] = useState<[string, string]>([
+    defaultSchema?.limit?.[0]?.toString() ?? '',
+    defaultSchema?.limit?.[1]?.toString() ?? '',
   ]);
-  const [limitUnit, setLimitUnit] = useState<'y' | 'w' | null>(null);
+  const [limitUnit, setLimitUnit] = useState<'y' | 'w' | undefined>(defaultSchema?.limitUnit);
 
   const titleRef = useRef<InputRef>(null);
   const inputComposingRef = useRef<Record<string, boolean>>({});
@@ -38,8 +50,8 @@ export const AddFilterSchemaModal = memo((props: AddFilterSchemaModalProps) => {
 
   const valueIllegal = useMemo(
     () => [
-      limit[0] !== null ? Number.isNaN(Number(limit[0])) : false,
-      limit[1] !== null ? Number.isNaN(Number(limit[1])) : false,
+      Number.isNaN(Number(limit[0])),
+      Number.isNaN(Number(limit[1])),
     ],
     [limit],
   );
@@ -52,7 +64,10 @@ export const AddFilterSchemaModal = memo((props: AddFilterSchemaModalProps) => {
           title,
           expression,
           RPN: transferToRPN(expression),
-          limit: [Number(limit[0] || null), Number(limit[1]) || null],
+          limit: [
+            str2Number(limit[0]),
+            str2Number(limit[1]),
+          ],
           limitUnit,
         });
       }
