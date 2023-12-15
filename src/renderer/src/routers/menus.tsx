@@ -5,6 +5,7 @@ import type { ItemType } from 'antd/lib/menu/hooks/useItems';
 import {
   DatabaseOutlined,
   RadarChartOutlined,
+  UserOutlined,
 } from '@ant-design/icons';
 import { RouteKeys } from '@renderer/routers/configs';
 
@@ -34,6 +35,14 @@ export interface MenuConfigs {
 }
 
 export const menuConfigs: MenuConfigs[] = [
+  {
+    label: '我的',
+    key: 'my',
+    icon: <UserOutlined />,
+    children: [
+      { label: '我的收藏', key: RouteKeys.MY_FAVORITE },
+    ],
+  },
   {
     label: '数据管理',
     key: 'data-manage',

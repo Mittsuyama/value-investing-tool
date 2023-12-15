@@ -12,6 +12,7 @@ import {
   StockOutlined,
 } from '@ant-design/icons';
 import { LeadingIndicators, StockBaseInfoList, FinancialReportsData } from '@renderer/pages/data-manage';
+import { MyFavorite } from '@renderer/pages/my';
 import { FinancialReportsDataDetail } from '@renderer/pages/detail';
 import { Filter } from '@renderer/pages/analysis';
 import { RouteKeys } from '@renderer/routers/configs';
@@ -53,7 +54,7 @@ export const App = memo(() => {
             style={{
               borderInlineEnd: isDark
                 ? '1px solid rgba(253, 253, 253, 0.12)'
-                : '1px solid rgba(5, 5, 5, 0.06)' 
+                : '1px solid rgba(5, 5, 5, 0.06)'
             }}
           >
             <StockOutlined className="text-xl" />
@@ -69,7 +70,7 @@ export const App = memo(() => {
             inlineCollapsed={collapsed}
             onClick={(e) => history.push(e.key)}
             defaultSelectedKeys={collapsed ? undefined: [defaultSelectedKeys]}
-            defaultOpenKeys={collapsed ? undefined : ['data-manage', 'analysis']}
+            defaultOpenKeys={collapsed ? undefined : ['my', 'data-manage', 'analysis']}
             mode="inline"
             items={generateMenuItems(menuConfigs)}
           />
@@ -81,6 +82,7 @@ export const App = memo(() => {
             <Route path={RouteKeys.STOCK_WITH_FINANCIAL_REPORTS_DATA} exact component={FinancialReportsData} />
             <Route path={RouteKeys.ANALYSIS_FILTER} exact component={Filter} />
             <Route path={RouteKeys.FINANCIAL_REPORTS_DATA_DETAIL} component={FinancialReportsDataDetail} />
+            <Route path={RouteKeys.MY_FAVORITE} component={MyFavorite} />
             <Route path="/" component={StockBaseInfoList} />
           </Switch>
         </div>

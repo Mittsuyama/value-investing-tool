@@ -1,5 +1,5 @@
 import { memo, useState } from 'react';
-import { Button, Space, Spin, Table, Divider, message } from 'antd';
+import { Button, Space, Spin, Table, Divider, message, Input } from 'antd';
 import { useMemoizedFn } from 'ahooks';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { MetaInfo } from '@renderer/types/meta';
@@ -17,9 +17,20 @@ const PAGE_SIZE = 10;
 export const StockBaseInfoList = memo(() => {
   const [metaInfo, setMetaInfo] = useState(getMetaInfo());
   const [fetching, setFetching] = useState(false);
+  const [searchKey, setSearchKey] = useState('');
 
-  const total = useLiveQuery(() => db.stockBaseInfoList.count());
-  const list = useLiveQuery(() => db.stockBaseInfoList.toArray());
+  const list = useLiveQuery(
+    async () => {
+      const collect = await db.stockBaseInfoList.toArray();
+      if (!searchKey) {
+        return collect;
+      }
+      return collect.filter((item) => {
+        return item.code.toLowerCase().indexOf(searchKey.toLowerCase()) >= 0 || item.name.indexOf(searchKey.toLowerCase()) >= 0;
+      });
+    },
+    [searchKey],
+  );
 
   const fetchList = useMemoizedFn(async () => {
     setFetching(true);
@@ -57,11 +68,15 @@ export const StockBaseInfoList = memo(() => {
                 ? (
                   <>
                     <div>股票数量:</div>
-                    <div>{total}</div>
+                    <div>{list.length || 'loading'}</div>
                   </>
                 )
                 : <Spin />
             }
+          </Space>
+          <Space size={16}>
+            <div>搜索:</div>
+            <Input.Search onSearch={(value) => setSearchKey(value)} />
           </Space>
           <Space size={16}>
             {

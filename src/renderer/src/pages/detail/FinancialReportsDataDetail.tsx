@@ -1,18 +1,24 @@
 import { memo, useMemo, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import { useAsyncEffect, useMap, useMemoizedFn } from 'ahooks';
+import { StarOutlined, StarFilled } from '@ant-design/icons';
 import { Breadcrumb, Button, Input, Space, Table, Mentions, Divider, Select, Tooltip } from 'antd';
 import type { ColumnType } from 'antd/es/table';
 import type { ItemType } from 'antd/lib/breadcrumb/Breadcrumb';
 import { Line } from '@ant-design/charts';
 import { db } from '@renderer/api/db';
 import { fetchTreeFinancialReportsData } from '@renderer/api/service/financialReportsData';
-import { getFinancialReportDataIndicatorGroups, setFinancialReportDataIndicatorGroups } from '@renderer/api/localstorage';
+import {
+  getFinancialReportDataIndicatorGroups,
+  setFinancialReportDataIndicatorGroups,
+  useToggoleFavoriteStockList,
+} from '@renderer/api/localstorage';
 import { ACCOUNT_ITEM, LEADING_INDICAOTR_ITEMS } from '@renderer/constants';
 import type { Report, ReportIndicator, ReportIndicatorGroup } from '@renderer/types';
 import { findMenu } from '@renderer/routers/menus';
-import { transferToRPN } from '@renderer/utils/expression';
+import { transferToRPN, formatFinancialNumber } from '@renderer/utils';
 import { computeFinancialReportData } from './computeFinancialReportData';
+import { BalanceItemDistribution } from '@renderer/components/BalanceItemDistribution/BalanceItemDsitribution';
 
 export const FinancialReportsDataDetail = memo(() => {
   const { search } = useLocation();
@@ -45,6 +51,7 @@ export const FinancialReportsDataDetail = memo(() => {
     },
     [search],
   );
+  const { has: inFavoriteList, toggle: toggleFavorite } = useToggoleFavoriteStockList(stockId);
 
   const breadItems = useMemo(
     () => {
@@ -162,6 +169,16 @@ export const FinancialReportsDataDetail = memo(() => {
         <Button onClick={() => setGraph(!graph)} type="primary">
           {graph ? '切换为表格 (可编辑)' : '切换为图 (只读)'}
         </Button>
+        <Button onClick={toggleFavorite}>
+          <Space size={8}>
+            {
+              inFavoriteList
+                ? <StarFilled style={{ color: 'orange' }} />
+                : <StarOutlined />
+            }
+            <div>收藏个股</div>
+          </Space>
+        </Button>
         <Divider type="vertical" />
         <div>
           内容参考
@@ -173,6 +190,29 @@ export const FinancialReportsDataDetail = memo(() => {
           东方财富 - 公告
         </Button>
       </Space>
+      <div className="mb-4 text-base font-bold w-full">
+        <div className="mb-3">资产负债表项目占比</div>
+        <div className="mb-3 w-full flex items-stretch gap-8">
+          <div className="flex-1">
+            <div className="text-sm">流动资产</div>
+            <BalanceItemDistribution reports={reports} type="current-asset" />
+          </div>
+          <div className="flex-1">
+            <div className="text-sm">流动负债</div>
+            <BalanceItemDistribution reports={reports} type="current-debt" />
+          </div>
+        </div>
+        <div className="mb-3 w-full flex items-stretch gap-8">
+          <div className="flex-1">
+            <div className="text-sm">非流动资产</div>
+            <BalanceItemDistribution reports={reports} type="non-currnet-asset" />
+          </div>
+          <div className="flex-1">
+            <div className="text-sm">非流动负债</div>
+            <BalanceItemDistribution reports={reports} type="non-current-debt" />
+          </div>
+        </div>
+      </div>
       {
         graph
           ? indicatorGroups.map(({ indicators, title, id: groupId }) => (
@@ -205,20 +245,10 @@ export const FinancialReportsDataDetail = memo(() => {
                             xField="year"
                             yField="value"
                             tooltip={{
-                              formatter: (data) => {
-                                let content = '';
-                                if (data.value > 1_0000_0000) {
-                                  content = `${(data.value / 1_0000_0000).toFixed(2)} 亿`;
-                                } else if (data.value > 1_0000) {
-                                  content = `${(data.value / 1_0000).toFixed(2)} 万`;
-                                } else {
-                                  content = `${data.value.toFixed(2)}${unit || ''}`;
-                                }
-                                return {
-                                  name: data.type,
-                                  value: content,
-                                };
-                              },
+                              formatter: (data) => ({
+                                name: data.type,
+                                value: formatFinancialNumber(data.value),
+                              }),
                             }}
                             height={200}
                           />
@@ -267,16 +297,7 @@ export const FinancialReportsDataDetail = memo(() => {
                               reports,
                               index,
                             );
-                            if (value === null) {
-                              return 'NaN';
-                            }
-                            if (value > 1_0000_0000) {
-                              return `${(value / 1_0000_0000).toFixed(2)} 亿`;
-                            }
-                            if (value > 1_0000) {
-                              return `${(value / 1_0000).toFixed(2)} 万`;
-                            }
-                            return `${value.toFixed(2)}${unit || ''}`;
+                            return formatFinancialNumber(value, { unit });
                           }
                         })),
                         {

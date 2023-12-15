@@ -7,4 +7,7 @@ export enum LocalstorageKeys {
 
   /** 个股财报数据分析指标 */
   FINANCIAL_REPORT_DATA_INDICATOR_GROUPS = 'financial-report-data-indicator-groups',
+
+  /** 收藏的个股 */
+  FAVORITE_STOCK_LIST = 'favorite-stock-list',
 }
