@@ -13,7 +13,7 @@ export const CURRENT_ASSET = {
   'z-yspj-应收票据': 'NOTE_RECE',
   'z-yszk-应收账款': 'ACCOUNTS_RECE',
   'z-yskxrz-应收款项融资': 'FINANCE_RECE',
-  'z-ynndqdfldzc一年内到期的非流动资产': 'NONCURRENT_ASSET_1YEAR',
+  'z-ynndqdfldzc-一年内到期的非流动资产': 'NONCURRENT_ASSET_1YEAR',
   'z-qtldzc-其他流动资产': 'OTHER_CURRENT_ASSET',
   'z-ldzcqtxm-流动资产其他项目': 'CURRENT_ASSET_OTHER',
 };

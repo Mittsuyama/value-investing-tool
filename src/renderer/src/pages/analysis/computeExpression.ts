@@ -1,7 +1,12 @@
 import { LEADING_INDICAOTR_ITEMS } from '@renderer/constants/leading-indicator-items';
 import type { StockBaseInfo, StockWithLeadingIndicators } from '@renderer/types';
 import type { RPNExpression } from '@renderer/types/filter-schema';
-import { computeAvg, computeStd, isOperation } from '@renderer/utils/expression';
+import {
+  computeAvg,
+  computeStd,
+  isOperation,
+  computeSimpleExponentialSmoothing,
+} from '@renderer/utils/expression';
 
 const getMultiYearValue = (info: StockWithLeadingIndicators, years: number, pinyin?: string, chinese?: string) => {
   return info
@@ -37,6 +42,14 @@ export const computeRPNWithLeadingIndicators = (rpn: RPNExpression, info: StockW
         // 总市值
         } else if (pinyin === 'zsz' && map) {
           stack.push(map.get(info.id)?.totalMarketCap || 0);
+        // 一次指数平滑
+        } else if (year.startsWith('ses')) {
+          stack.push(computeSimpleExponentialSmoothing(getMultiYearValue(
+            info,
+            Number(year[3]),
+            pinyin,
+            chinese,
+          )));
         // 年均
         } else if (year.startsWith('avg')) {
           stack.push(computeAvg(getMultiYearValue(

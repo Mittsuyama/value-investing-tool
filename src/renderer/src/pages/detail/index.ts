@@ -1,1 +1,1 @@
-export * from './FinancialReportsDataDetail';
+export * from './FRIDetail';

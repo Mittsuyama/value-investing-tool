@@ -13,8 +13,9 @@ import {
 } from '@ant-design/icons';
 import { LeadingIndicators, StockBaseInfoList, FinancialReportsData } from '@renderer/pages/data-manage';
 import { MyFavorite } from '@renderer/pages/my';
-import { FinancialReportsDataDetail } from '@renderer/pages/detail';
+import { FRIDetail } from '@renderer/pages/detail';
 import { Filter } from '@renderer/pages/analysis';
+import { Leading, FRIGroupsConfig } from '@renderer/pages/indicator-manage';
 import { RouteKeys } from '@renderer/routers/configs';
 import { menuConfigs, findMenu, generateMenuItems } from '@renderer/routers/menus';
 
@@ -70,7 +71,7 @@ export const App = memo(() => {
             inlineCollapsed={collapsed}
             onClick={(e) => history.push(e.key)}
             defaultSelectedKeys={collapsed ? undefined: [defaultSelectedKeys]}
-            defaultOpenKeys={collapsed ? undefined : ['my', 'data-manage', 'analysis']}
+            defaultOpenKeys={collapsed ? undefined : ['my', 'data-manage', 'indicator-manage', 'analysis']}
             mode="inline"
             items={generateMenuItems(menuConfigs)}
           />
@@ -80,8 +81,10 @@ export const App = memo(() => {
             <Route path={RouteKeys.STOCK_BASE_INFO} exact component={StockBaseInfoList} />
             <Route path={RouteKeys.STOCK_WITH_LEADING_INDICAOTRS} exact component={LeadingIndicators} />
             <Route path={RouteKeys.STOCK_WITH_FINANCIAL_REPORTS_DATA} exact component={FinancialReportsData} />
+            <Route path={RouteKeys.INDICATOR_MANAGE_LEADING_INDICATOR} exact component={Leading} />
+            <Route path={RouteKeys.INDICATOR_MANAGE_FRI_GROUP} exact component={FRIGroupsConfig} />
             <Route path={RouteKeys.ANALYSIS_FILTER} exact component={Filter} />
-            <Route path={RouteKeys.FINANCIAL_REPORTS_DATA_DETAIL} component={FinancialReportsDataDetail} />
+            <Route path={RouteKeys.FRI_DETAIL} component={FRIDetail} />
             <Route path={RouteKeys.MY_FAVORITE} component={MyFavorite} />
             <Route path="/" component={StockBaseInfoList} />
           </Switch>

@@ -6,6 +6,8 @@ import {
   Tooltip,
   Tag,
   theme,
+  Space,
+  Input,
 } from 'antd';
 import { TableColumnProps } from 'antd/lib';
 import { PlusOutlined } from '@ant-design/icons';
@@ -76,6 +78,7 @@ export const Filter = memo(() => {
   const [addFilterModalVisible, setAddFilterModalVisible] = useState(false);
   const [pageSize, setPageSize] = useState(20);
   const [defaultSchema, setDefaultSchema] = useState<FilterSchema | undefined>(undefined);
+  const [searchKey, setSearchKey] = useState('');
 
   const [filterOnSet, setFilterOnSet] = useState(new Set(schema.map((item) => item.id)));
 
@@ -93,7 +96,16 @@ export const Filter = memo(() => {
 
   const filteredList = useMemo(
     () => {
-      return list?.filter((record) => {
+      if (!list) {
+        return undefined;
+      }
+      let collect = list;
+      if (searchKey) {
+        collect = collect.filter((item) => {
+          return item.code.toLowerCase().indexOf(searchKey.toLowerCase()) >= 0 || item.name.indexOf(searchKey.toLowerCase()) >= 0;
+        });
+      }
+      return collect.filter((record) => {
         return !schema.find((sc) => {
           if (!filterOnSet.has(sc.id)) {
             return false;
@@ -123,7 +135,7 @@ export const Filter = memo(() => {
         });
       });
     },
-    [list, filterOnSet, schema, baseInfoMap],
+    [list, filterOnSet, schema, baseInfoMap, searchKey],
   );
 
   const industryList = useMemo(
@@ -139,7 +151,7 @@ export const Filter = memo(() => {
       <div className="text-lg mb-4 bold">
         指标筛选
       </div>
-      <div className="flex items-center flex-wrap gap-y-2 mb-4">
+      <div className="flex items-center flex-wrap gap-y-2 mb-6">
         <div className="mr-5">
           当前筛选项:
         </div>
@@ -204,9 +216,15 @@ export const Filter = memo(() => {
           增加筛选项
         </Tag>
       </div>
-      <div className="text-base mb-4">
-        {`筛选结果条数: ${filteredList ? filteredList.length : '加载中' }`}
-      </div>
+      <Space size={24} className="mb-6">
+        <div className="text-base">
+          {`筛选结果条数: ${filteredList ? filteredList.length : '加载中' }`}
+        </div>
+        <Space size={16}>
+          <div>搜索:</div>
+          <Input.Search onSearch={(value) => setSearchKey(value)} />
+        </Space>
+      </Space>
       <div className="w-full overflow-x-auto">
         <Spin spinning={!filteredList}>
           <Table<StockWithLeadingIndicators>

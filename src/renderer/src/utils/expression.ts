@@ -13,12 +13,20 @@ export const computeAvg = (ars: number[]): number => {
   return sum / ars.length;
 };
 
+export const computeSimpleExponentialSmoothing = (ars: number[], alpha = 0.5): number => {
+  return ars
+    .reverse()
+    .reduce((pre, cur) => {
+      return pre * alpha + (1 - alpha) * cur;
+    }, 0);
+};
+
 export const computeStd = (ars: number[]): number => {
   const avg = computeAvg(ars);
   const sum = ars.reduce((prev, curr) => {
     return Math.pow(curr - avg, 2) + prev;
   }, 0);
-  return Math.sqrt(sum) / ars.length;
+  return Math.sqrt(sum / ars.length);
 };
 
 export const transferToRPN = (expression: string) => {

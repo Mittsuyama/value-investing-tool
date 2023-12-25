@@ -1,4 +1,4 @@
-import type { Report } from '@renderer/types';
+import type { FinancialReportData } from '@renderer/types';
 import { LEADING_INDICAOTR_ITEMS } from '@renderer/constants/leading-indicator-items';
 import type { RPNExpression } from '@renderer/types/filter-schema';
 import { isOperation } from '@renderer/utils/expression';
@@ -18,7 +18,7 @@ const isReplaceWithZeroWhenNotFound = (str: string) => {
   };
 };
 
-export const computeFinancialReportData = (rpn: RPNExpression, reports: Report[], currentYear: number) => {
+export const computeFinancialReportData = (rpn: RPNExpression, reports: FinancialReportData[], currentYear: number) => {
   try {
     const stack: number[] = [];
     rpn.forEach((item) => {

@@ -1,5 +1,7 @@
 import { RPNExpression } from './filter-schema';
 
+export type ReportIndicatorUnit = '%' | 'none';
+
 export interface ReportIndicator {
   /** 筛选标识符 id */
   id: string;
@@ -12,9 +14,9 @@ export interface ReportIndicator {
 
   /** 逆波兰表达式 */
   RPN?: RPNExpression;
-  
+
   /** 单位 */
-  unit: '%' | null;
+  unit?: ReportIndicatorUnit;
 }
 
 export interface ReportIndicatorGroup {

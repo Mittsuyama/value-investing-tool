@@ -1,5 +1,7 @@
+import { ReportIndicatorUnit } from '@renderer/types';
+
 export interface FormatFinancialNumberOptions {
-  unit?: string | null;
+  unit?: ReportIndicatorUnit;
   replaceNaNWithZero?: boolean;
 }
 
@@ -24,6 +26,6 @@ export const formatFinancialNumber = (data: unknown, options: FormatFinancialNum
   if (num > 1_0000) {
     return `${(num / 1_0000).toFixed(2)} 万`;
   }
-  return `${num.toFixed(2)}${options.unit || ''}`;
+  return `${num.toFixed(2)}${options.unit === 'none' ? '' : options.unit || ''}`;
 };
 

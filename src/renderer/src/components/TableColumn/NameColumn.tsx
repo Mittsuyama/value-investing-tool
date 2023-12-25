@@ -20,7 +20,7 @@ export const NameColumn = memo((props: NameColumnProps) => {
         const search = new URLSearchParams();
         search.set('id', id);
         search.set('from', pathname);
-        history.push(`${RouteKeys.FINANCIAL_REPORTS_DATA_DETAIL}?${search.toString()}`)
+        history.push(`${RouteKeys.FRI_DETAIL}?${search.toString()}`)
       }}
     >
       {name}

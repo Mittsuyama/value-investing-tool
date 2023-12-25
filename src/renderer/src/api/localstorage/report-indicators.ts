@@ -14,3 +14,4 @@ export const setFinancialReportDataIndicatorGroups = (schema: Array<ReportIndica
     JSON.stringify(schema),
   );
 };
+

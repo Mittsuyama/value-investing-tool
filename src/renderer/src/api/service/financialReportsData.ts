@@ -1,4 +1,4 @@
-import type { Report } from '@renderer/types';
+import type { FinancialReportData } from '@renderer/types';
 import { get } from './utils';
 
 const YEAR_REPORT_DATE = "-12-31";
@@ -50,7 +50,7 @@ export const fetchReport = async (params: FetchRerpotParams) => {
     );
   }));
 
-  const resList: Report[] = batchResponse.reduce((pre, cur) => {
+  const resList: FinancialReportData[] = batchResponse.reduce((pre, cur) => {
     return pre.concat(cur.data);
   }, []);
 
@@ -98,7 +98,7 @@ export const bundleRequest = async (params: BundleRequestParams & Pick<FetchRerp
   return reports;
 };
 
-export const fetchTreeFinancialReportsData = async (stockIds: string[], years: number): Promise<Report[][]> => {
+export const fetchTreeFinancialReportsData = async (stockIds: string[], years: number): Promise<FinancialReportData[][]> => {
   const [
     zcfz,
     lr,
@@ -134,3 +134,4 @@ export const fetchTreeFinancialReportsData = async (stockIds: string[], years: n
     })
   });
 };
+

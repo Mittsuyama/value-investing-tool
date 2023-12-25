@@ -1,6 +1,6 @@
 import { memo, useMemo } from 'react';
-import { Line } from '@ant-design/charts';
-import { Report } from '@renderer/types';
+import { Line, Pie } from '@ant-design/charts';
+import { FinancialReportData } from '@renderer/types';
 import {
   ACCOUNT_ITEM,
   CURRENT_ASSET,
@@ -10,7 +10,7 @@ import {
 } from '@renderer/constants';
 import { formatFinancialNumber } from '@renderer/utils';
 
-type SheetType
+export type SheetType
 = 'asset'
 | 'debt'
 | 'current-asset'
@@ -45,45 +45,49 @@ const sheetType2Keys: Record<SheetType, string[]> = {
 
 interface BalanceItemDistributionProps {
   type: SheetType;
-  reports: Report[];
+  reports: FinancialReportData[];
 }
 
-interface LineData {
+interface ChartDataItem {
   value: number;
   year: string
   type: string;
 }
 
-const getValidItems = (reports: Report[], type: SheetType) => {
+const getValidItems = (report: FinancialReportData, type: SheetType) => {
+  const total: number = Number(report[ACCOUNT_ITEM[totalKeyRecord[type]]]) || 0;
+
+  const datas = sheetType2Keys[type].map<ChartDataItem | undefined>((key) => {
+    const percent = (Number(report[ACCOUNT_ITEM[key]]) || 0) / total * 100;
+    if (percent > 10) {
+      const [, , chinese] = key.split('-');
+      return {
+        year: String(report['REPORT_YEAR']),
+        type: chinese,
+        value: percent,
+      };
+    }
+    return undefined;
+  });
+
+  const totalPercent = datas.reduce((pre, cur) => pre + (cur?.value || 0), 0);
+
+  return datas
+    .concat({
+      year: String(report['REPORT_YEAR']),
+      type: '剩余',
+      value: 100 - totalPercent,
+    })
+    .filter((data): data is ChartDataItem => Boolean(data))
+    .sort((a, b) => b.value - a.value);
+};
+
+const getLineData = (reports: FinancialReportData[], type: SheetType) => {
   return reports
     .map((_, index) => {
       // 倒着计算
-      const cur = reports.length - index - 1;
-      const total: number = Number(reports[cur][ACCOUNT_ITEM[totalKeyRecord[type]]]) || 0;
-
-      const datas = sheetType2Keys[type].map<LineData | undefined>((key) => {
-        const percent = (Number(reports[cur][ACCOUNT_ITEM[key]]) || 0) / total * 100;
-        if (percent > 10) {
-          const [, , chinese] = key.split('-');
-          return {
-            year: String(reports[cur]['REPORT_YEAR']),
-            type: chinese,
-            value: percent,
-          };
-        }
-        return undefined;
-      });
-
-      const totalPercent = datas.reduce((pre, cur) => pre + (cur?.value || 0), 0);
-
-      return datas
-        .concat({
-          year: String(reports[cur]['REPORT_YEAR']),
-          type: '剩余',
-          value: 100 - totalPercent,
-        })
-        .filter((data): data is LineData => Boolean(data))
-        .sort((a, b) => b.value - a.value);
+      const report = reports[reports.length - index - 1];
+      return getValidItems(report, type);
     })
     .flat();
 };
@@ -91,25 +95,59 @@ const getValidItems = (reports: Report[], type: SheetType) => {
 export const BalanceItemDistribution = memo((props: BalanceItemDistributionProps) => {
   const { type, reports } = props;
 
-  const data = useMemo(
-    () => getValidItems(reports, type),
+  const lineData = useMemo(
+    () => getLineData(reports, type),
+    [reports, type],
+  );
+
+  const pieData = useMemo(
+    () => reports.length ? getValidItems(reports[0], type) : [],
     [reports, type],
   );
 
   return (
-    <Line
-      height={200}
-      data={data}
-      xField="year"
-      yField="value"
-      tooltip={{
-        formatter: (data) => ({
-          name: data.type,
-          value: formatFinancialNumber(data.value, { unit: '%' }),
-        }),
-      }}
-      seriesField="type"
-    />
+    <div className="flex items-center w-full">
+      <div className="flex-1 overflow-hidden">
+        <Line
+          legend={false}
+          height={200}
+          data={lineData}
+          xField="year"
+          yField="value"
+          tooltip={{
+            formatter: (data) => ({
+              name: data.type,
+              value: formatFinancialNumber(data.value, { unit: '%' }),
+            }),
+          }}
+          seriesField="type"
+        />
+      </div>
+      <div className="flex-none">
+        <Pie
+          legend={false}
+          width={350}
+          height={200}
+          appendPadding={10}
+          data={pieData}
+          angleField="value"
+          colorField="type"
+          radius={0.8}
+          label={{
+            type: 'outer',
+            content: '{name} {percentage}',
+          }}
+          interactions={[
+            {
+              type: 'pie-legend-active',
+            },
+            {
+              type: 'element-active',
+            },
+          ]}
+        />
+      </div>
+    </div>
   );
 });
 

@@ -1,9 +1,10 @@
 import Dexie, { Table } from 'dexie';
-import { StockBaseInfo, StockWithLeadingIndicators } from '@renderer/types';
+import { StockBaseInfo, StockWithFinancialReportData, StockWithLeadingIndicators } from '@renderer/types';
 
 export class Database extends Dexie {
   stockBaseInfoList!: Table<StockBaseInfo>;
   stockWithLeadingIndicatorsList!: Table<StockWithLeadingIndicators>;
+  stockWithFRD!: Table<StockWithFinancialReportData>;
 
   constructor() {
     super('value-investing-tool');
@@ -12,6 +13,9 @@ export class Database extends Dexie {
     });
     this.version(2).stores({
       stockWithLeadingIndicatorsList: '&id',
+    });
+    this.version(4).stores({
+      stockWithFRD: '&id',
     });
   }
 }

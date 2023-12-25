@@ -6,6 +6,7 @@ import {
   DatabaseOutlined,
   RadarChartOutlined,
   UserOutlined,
+  BarChartOutlined,
 } from '@ant-design/icons';
 import { RouteKeys } from '@renderer/routers/configs';
 
@@ -50,7 +51,16 @@ export const menuConfigs: MenuConfigs[] = [
     children: [
       { label: '基本数据', key: RouteKeys.STOCK_BASE_INFO },
       { label: '主要指标', key: RouteKeys.STOCK_WITH_LEADING_INDICAOTRS },
-      { label: '三大报表数据基本数据', key: RouteKeys.STOCK_WITH_FINANCIAL_REPORTS_DATA },
+      { label: '报表数据基本数据', key: RouteKeys.STOCK_WITH_FINANCIAL_REPORTS_DATA },
+    ],
+  },
+  {
+    label: '指标管理',
+    key: 'indicator-manage',
+    icon: <BarChartOutlined />,
+    children: [
+      { label: '主要指标', key: RouteKeys.INDICATOR_MANAGE_LEADING_INDICATOR },
+      { label: '报表数据指标', key: RouteKeys.INDICATOR_MANAGE_FRI_GROUP },
     ],
   },
   {
