@@ -26,8 +26,6 @@ export const NON_CURRENT_ASSET = {
   'z-cqysk-长期应收款': 'LONG_RECE',
   'z-dysdszc-递延所得税资产': 'DEFER_TAX_ASSET',
   'z-gdzc-固定资产': 'FIXED_ASSET',
-  'z-qtyfk-其他应付款': 'OTHER_PAYABLE',
-  'z-qtyfkhj-其他应付款合计': 'TOTAL_OTHER_PAYABLE',
   'z-qtqygjtz-其他权益工具投资': 'OTHER_EQUITY_INVEST',
   'z-zjgc-在建工程': 'CIP',
   'z-wxzc-无形资产': 'INTANGIBLE_ASSET',
@@ -54,6 +52,8 @@ export const CURRENT_DEBT = {
   'z-ynndqdldfz-一年内到期的非流动负债': 'NONCURRENT_LIAB_1YEAR',
   'z-yjsf-应交税费': 'TAX_PAYABLE',
   'z-qtldfz-其他流动负债': 'OTHER_CURRENT_LIAB',
+  'z-qtyfk-其他应付款': 'OTHER_PAYABLE',
+  'z-qtyfkhj-其他应付款合计': 'TOTAL_OTHER_PAYABLE',
 }
 
 /** 重点关注非流动负债的项目 */

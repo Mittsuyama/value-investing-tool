@@ -1,9 +1,12 @@
 import { memo, useState } from 'react';
-import { Button, Space, Spin, Table, Divider, message, Input } from 'antd';
-import { useMemoizedFn } from 'ahooks';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { Button, Space, Spin, Table, Divider, message } from 'antd';
+import { atomWithStorage } from 'jotai/utils';
+import { useAtom } from 'jotai';
+import { useAsyncEffect, useMemoizedFn } from 'ahooks';
+import type { StockBaseInfo } from '@renderer/types';
 import { MetaInfo } from '@renderer/types/meta';
 import { StoreKeys } from '@renderer/constants';
+import { fetchLeadingIndicatorsWithCache } from '@renderer/api/helpers/fetchLeadingIndicatorsWithCache';
 import { fetchStocksByFilter } from '@renderer/api/service';
 import { db } from '@renderer/api/db';
 import { NameColumn } from '@renderer/components/TableColumn';
@@ -11,25 +14,59 @@ import {
   getMetaInfo,
   setMetaInfo as setLocalstorageMetaInfo,
 } from '@renderer/api/localstorage';
+import { StockBaseInfoFilterForm, StockBaseInfoFilterValues } from './StockBaseInfoFilterForm';
+import { useLiveQuery } from 'dexie-react-hooks';
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 20;
+
+const key = 'stock-base-info-filter-values';
+const filterFormValuesAtom = atomWithStorage<StockBaseInfoFilterValues>(
+  key,
+  JSON.parse(localStorage.getItem(key) || '{}'),
+);
 
 export const StockBaseInfoList = memo(() => {
   const [metaInfo, setMetaInfo] = useState(getMetaInfo());
   const [fetching, setFetching] = useState(false);
-  const [searchKey, setSearchKey] = useState('');
+  const [selectedKeys, setSelectedKeys] = useState<Array<string>>([]);
+  const [list, setList] = useState<StockBaseInfo[] | undefined>(undefined);
+  const [filters, setFilters] = useAtom(filterFormValuesAtom);
 
-  const list = useLiveQuery(
-    async () => {
-      const collect = await db.stockBaseInfoList.toArray();
-      if (!searchKey) {
-        return collect;
+  const listBeforeFilter = useLiveQuery(() => db.stockBaseInfoList.toArray());
+
+  const handleListFilter = useMemoizedFn((values: StockBaseInfoFilterValues, list?: StockBaseInfo[]) => {
+    if (!list) {
+      return undefined;
+    }
+    return list.filter((item) => {
+      if (values.maxPe && item.ttmPe >  Number(values.maxPe)) {
+        return false;
       }
-      return collect.filter((item) => {
-        return item.code.toLowerCase().indexOf(searchKey.toLowerCase()) >= 0 || item.name.indexOf(searchKey.toLowerCase()) >= 0;
-      });
+      if (values.minPe && item.ttmPe < Number(values.minPe)) {
+        return false;
+      }
+      if (values.maxROE && item.roe > Number(values.maxROE)) {
+        return false;
+      }
+      if (values.minROE && item.roe < Number(values.minROE)) {
+        return false;
+      }
+      if (
+        values.searchKey
+          && item.id.toLowerCase().indexOf(values.searchKey) === -1
+          && item.name.toLowerCase().indexOf(values.searchKey) === -1
+      ) {
+        return true;
+      }
+      return true;
+    });
+  });
+
+  useAsyncEffect(
+    async () => {
+      setList(handleListFilter(filters, listBeforeFilter));
     },
-    [searchKey],
+    [listBeforeFilter, filters],
   );
 
   const fetchList = useMemoizedFn(async () => {
@@ -75,10 +112,6 @@ export const StockBaseInfoList = memo(() => {
             }
           </Space>
           <Space size={16}>
-            <div>搜索:</div>
-            <Input.Search onSearch={(value) => setSearchKey(value)} />
-          </Space>
-          <Space size={16}>
             {
               list
                 ? (
@@ -97,7 +130,25 @@ export const StockBaseInfoList = memo(() => {
             }
           </Space>
           <Space size={16}>
-            <Button type="primary" loading={fetching} onClick={fetchList}>
+            {selectedKeys.length
+              ? (
+                <Button
+                  type="primary"
+                  onClick={() => fetchLeadingIndicatorsWithCache(selectedKeys, { forceUpdate: true })}
+                >
+                  获取所选股主要指标
+                </Button>
+              )
+              : (
+                <Button
+                  type="primary"
+                  onClick={() => list && fetchLeadingIndicatorsWithCache(list.map((item) => item.id), { forceUpdate: true })}
+                >
+                  获取表内所有股主要指标
+                </Button>
+              )
+            }
+            <Button loading={fetching} onClick={fetchList}>
               全量更新数据
             </Button>
             <Button
@@ -120,13 +171,25 @@ export const StockBaseInfoList = memo(() => {
           </Space>
         </Space>
       </div>
+      <div className="mb-4">
+        <StockBaseInfoFilterForm
+          initialValues={filters}
+          disabled={!list}
+          onSubmit={setFilters}
+        />
+      </div>
       <Spin spinning={!list}>
         <Table
+          rowSelection={{
+            type: 'checkbox',
+            selectedRowKeys: selectedKeys,
+            onChange: (keys) => setSelectedKeys(keys.map(String)),
+          }}
           pagination={{
             pageSize: PAGE_SIZE,
             showQuickJumper: true,
           }}
-          rowKey="code"
+          rowKey="id"
           dataSource={list || []}
           columns={[
             {

@@ -146,12 +146,16 @@
   gap: 2rem
 }
 
-.gap-4 {
-  gap: 1rem
+.gap-10 {
+  gap: 2.5rem
 }
 
 .gap-y-2 {
   row-gap: 0.5rem
+}
+
+.gap-y-4 {
+  row-gap: 1rem
 }
 
 .overflow-auto {
@@ -247,6 +251,10 @@
 
 .font-bold {
   font-weight: 700
+}
+
+.tracking-wider {
+  letter-spacing: 0.05em
 }
 
 .text-\[\#4374F8\] {

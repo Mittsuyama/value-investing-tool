@@ -60,8 +60,8 @@ export const App = memo(() => {
           >
             <StockOutlined className="text-xl" />
             {!collapsed && (
-              <div className="text-base">
-                Value Investing
+              <div className="text-base tracking-wider">
+                Value Investment
               </div>
             )}
           </div>

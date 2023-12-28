@@ -12,7 +12,7 @@ import {
 import { StoreKeys } from '@renderer/constants';
 import { ButtonWithThrottle } from '@renderer/components/ButtonWithThrottle';
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 20;
 const FETCH_STOCK_WITH_LEADING_INDICATORS_TOTAL_PAGE = 50;
 
 export const LeadingIndicators = memo(() => {
