@@ -1,2 +1,1 @@
-export * from './fetchFRIWithCache';
-
+export * from './fetchFRDWithCache';

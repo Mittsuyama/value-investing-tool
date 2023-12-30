@@ -31,6 +31,7 @@ export const StockBaseInfoList = memo(() => {
   const [selectedKeys, setSelectedKeys] = useState<Array<string>>([]);
   const [list, setList] = useState<StockBaseInfo[] | undefined>(undefined);
   const [filters, setFilters] = useAtom(filterFormValuesAtom);
+  const [friLoading, setFriLoading] = useState(false);
 
   const listBeforeFilter = useLiveQuery(() => db.stockBaseInfoList.toArray());
 
@@ -56,7 +57,7 @@ export const StockBaseInfoList = memo(() => {
           && item.id.toLowerCase().indexOf(values.searchKey) === -1
           && item.name.toLowerCase().indexOf(values.searchKey) === -1
       ) {
-        return true;
+        return false;
       }
       return true;
     });
@@ -89,6 +90,22 @@ export const StockBaseInfoList = memo(() => {
       message.error('获取失败')
     } finally {
       setFetching(false);
+    }
+  });
+
+  const selectivelyFetchFRI = useMemoizedFn(async (stockIds: string[]) => {
+    if (stockIds.length > 500) {
+      message.error('获取数量超过 500，建议分批或通过『数据管理 - 主要指标』进行获取');
+      return;
+    }
+    try {
+      setFriLoading(true);
+      await fetchLeadingIndicatorsWithCache(stockIds, { forceUpdate: true });
+    } catch (e: any) {
+      message.error(e.message || '获取失败');
+    }
+      finally {
+      setFriLoading(false)
     }
   });
 
@@ -134,7 +151,8 @@ export const StockBaseInfoList = memo(() => {
               ? (
                 <Button
                   type="primary"
-                  onClick={() => fetchLeadingIndicatorsWithCache(selectedKeys, { forceUpdate: true })}
+                  loading={friLoading}
+                  onClick={() => selectivelyFetchFRI(selectedKeys)}
                 >
                   获取所选股主要指标
                 </Button>
@@ -142,7 +160,8 @@ export const StockBaseInfoList = memo(() => {
               : (
                 <Button
                   type="primary"
-                  onClick={() => list && fetchLeadingIndicatorsWithCache(list.map((item) => item.id), { forceUpdate: true })}
+                  loading={friLoading}
+                  onClick={() => list && selectivelyFetchFRI(list.map((item) => item.id))}
                 >
                   获取表内所有股主要指标
                 </Button>

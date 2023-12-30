@@ -66,7 +66,7 @@ export const App = memo(() => {
             )}
           </div>
           <Menu
-            className="flex-1"
+            className="flex-1 select-none"
             style={{ width: collapsed ? 80 : 256 }}
             inlineCollapsed={collapsed}
             onClick={(e) => history.push(e.key)}

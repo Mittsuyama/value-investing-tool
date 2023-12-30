@@ -31,7 +31,7 @@ export const StockBaseInfoFilterForm = memo((props: StockBaseInfoFilterFormProps
       disabled={disabled}
       initialValues={initialValues}
     >
-      <Form.Item label="搜索" name="search">
+      <Form.Item label="搜索" name="searchKey">
         <Input />
       </Form.Item>
       <Form.Item label="最小 PE" name="minPe">
@@ -49,7 +49,6 @@ export const StockBaseInfoFilterForm = memo((props: StockBaseInfoFilterFormProps
       <Form.Item>
         <Button type="primary" onClick={() => {
           onSubmit?.(formRef.getFieldsValue());
-          setValues(formRef.getFieldsValue());
         }}>
           确认
         </Button>

@@ -1,6 +1,7 @@
 import { db } from '@renderer/api/db';
 import { fetchTreeFinancialReportsData } from '@renderer/api/service/financialReportsData';
 import { StockWithFinancialReportData } from '@renderer/types';
+import { fetchLeadingIndicatorsWithCache } from './fetchLeadingIndicatorsWithCache';
 
 interface FetchFRDwithCacheOptions {
   years?: number;
@@ -20,7 +21,7 @@ export const fetchFRDwithCache = async (stocks: string[], options?: FetchFRDwith
 
   const needFetchIds = stocks.filter((id) => !cachedIdSet.has(id));
   const response = await fetchTreeFinancialReportsData(needFetchIds, years);
-  const leadingIndicatorsList = await db.stockWithLeadingIndicatorsList.where('id').anyOf(needFetchIds).toArray();
+  const leadingIndicatorsList = await fetchLeadingIndicatorsWithCache(needFetchIds);
 
   const toBeCachedList = response.map<StockWithFinancialReportData>((reports, index) => {
     const stockWithLeadingIndicators = leadingIndicatorsList.find((item) => item.id === needFetchIds[index]);
