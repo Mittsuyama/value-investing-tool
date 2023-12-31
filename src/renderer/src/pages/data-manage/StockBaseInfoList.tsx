@@ -25,6 +25,34 @@ const filterFormValuesAtom = atomWithStorage<StockBaseInfoFilterValues>(
   JSON.parse(localStorage.getItem(key) || '{}'),
 );
 
+const handleListFilter = (values: StockBaseInfoFilterValues, list?: StockBaseInfo[]) => {
+  if (!list) {
+    return undefined;
+  }
+  return list.filter((item) => {
+    if (values.maxPe && item.ttmPe >  Number(values.maxPe)) {
+      return false;
+    }
+    if (values.minPe && item.ttmPe < Number(values.minPe)) {
+      return false;
+    }
+    if (values.maxROE && item.roe > Number(values.maxROE)) {
+      return false;
+    }
+    if (values.minROE && item.roe < Number(values.minROE)) {
+      return false;
+    }
+    if (
+      values.searchKey
+        && item.id.toLowerCase().indexOf(values.searchKey) === -1
+        && item.name.toLowerCase().indexOf(values.searchKey) === -1
+    ) {
+      return false;
+    }
+    return true;
+  });
+}
+
 export const StockBaseInfoList = memo(() => {
   const [metaInfo, setMetaInfo] = useState(getMetaInfo());
   const [fetching, setFetching] = useState(false);
@@ -34,34 +62,6 @@ export const StockBaseInfoList = memo(() => {
   const [friLoading, setFriLoading] = useState(false);
 
   const listBeforeFilter = useLiveQuery(() => db.stockBaseInfoList.toArray());
-
-  const handleListFilter = useMemoizedFn((values: StockBaseInfoFilterValues, list?: StockBaseInfo[]) => {
-    if (!list) {
-      return undefined;
-    }
-    return list.filter((item) => {
-      if (values.maxPe && item.ttmPe >  Number(values.maxPe)) {
-        return false;
-      }
-      if (values.minPe && item.ttmPe < Number(values.minPe)) {
-        return false;
-      }
-      if (values.maxROE && item.roe > Number(values.maxROE)) {
-        return false;
-      }
-      if (values.minROE && item.roe < Number(values.minROE)) {
-        return false;
-      }
-      if (
-        values.searchKey
-          && item.id.toLowerCase().indexOf(values.searchKey) === -1
-          && item.name.toLowerCase().indexOf(values.searchKey) === -1
-      ) {
-        return false;
-      }
-      return true;
-    });
-  });
 
   useAsyncEffect(
     async () => {
@@ -95,7 +95,7 @@ export const StockBaseInfoList = memo(() => {
 
   const selectivelyFetchFRI = useMemoizedFn(async (stockIds: string[]) => {
     if (stockIds.length > 500) {
-      message.error('获取数量超过 500，建议分批或通过『数据管理 - 主要指标』进行获取');
+      message.error('获取数量超过 500, 建议分批或通过『数据管理 - 主要指标』进行获取');
       return;
     }
     try {
